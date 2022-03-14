@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import numpy as np
-import copy
 import torch
 from scipy import stats
 from sklearn import metrics
@@ -31,6 +30,9 @@ class PredictorEvaluator(object):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.results = [config]
 
+        self.train_data_file = config.train_data_file
+        self.test_data_file = config.test_data_file
+
     def adapt_search_space(
         self, search_space, load_labeled, scope=None, dataset_api=None
     ):
@@ -47,35 +49,40 @@ class PredictorEvaluator(object):
         """
         info_dict = {}
         accuracy = arch.query(
-            metric=self.metric, dataset=self.dataset, dataset_api=self.dataset_api
+            metric=self.metric, dataset=self.dataset,
+            dataset_api=self.dataset_api
         )
         train_time = arch.query(
-            metric=Metric.TRAIN_TIME, dataset=self.dataset, dataset_api=self.dataset_api
+            metric=Metric.TRAIN_TIME, dataset=self.dataset,
+            dataset_api=self.dataset_api
         )
-        data_reqs = self.predictor.get_data_reqs()
-        if data_reqs["requires_partial_lc"]:
-            # add partial learning curve if applicable
-            if type(data_reqs["metric"]) is list:
-                for metric_i in data_reqs["metric"]:
-                    metric_lc = arch.query(
-                        metric=metric_i,
-                        full_lc=True,
-                        dataset=self.dataset,
-                        dataset_api=self.dataset_api,
-                    )
-                    info_dict[f"{metric_i.name}_lc"] = metric_lc
-
-            else:
-                lc = arch.query(
-                    metric=data_reqs["metric"],
-                    full_lc=True,
-                    dataset=self.dataset,
-                    dataset_api=self.dataset_api,
-                )
-                info_dict["lc"] = lc
         return accuracy, train_time, info_dict
 
-    def load_dataset(self, load_labeled=False, data_size=10, arch_hash_map={}):
+    def load_dataset_from_file(self, datapath, size):
+        with open(datapath) as f:
+            data = json.load(f)
+
+        xdata = []
+        ydata = []
+
+        for i, x in enumerate(data):
+            arch = x['arch']
+            acc = x['accuracy']
+            model = self.search_space.clone()
+            model.set_spec(arch)
+            model.prepare_evaluation()
+            model.parse()
+
+            xdata.append(model)
+            ydata.append(acc)
+
+            if i >= size:
+                break
+
+        return [xdata, ydata, None, None]
+
+
+    def load_dataset(self, load_labeled=False, data_size=10):
         """
         There are two ways to load an architecture.
         load_labeled=False: sample a random architecture from the search space.
@@ -99,8 +106,8 @@ class PredictorEvaluator(object):
                 arch = self.search_space.clone()
                 arch.load_labeled_architecture(dataset_api=self.dataset_api)
 
-            arch_hash = arch.get_hash()
-            arch_hash_map[arch_hash] = True
+            arch.prepare_evaluation()
+            arch.parse()
 
             accuracy, train_time, info_dict = self.get_full_arch_info(arch)
             xdata.append(arch)
@@ -108,7 +115,7 @@ class PredictorEvaluator(object):
             info.append(info_dict)
             train_times.append(train_time)
 
-        return [xdata, ydata, info, train_times], arch_hash_map
+        return [xdata, ydata, info, train_times]
 
     def single_evaluate(self, train_data, test_data):
         """
@@ -125,7 +132,13 @@ class PredictorEvaluator(object):
         self.predictor.fit(xtrain, ytrain, train_info)
         fit_time_end = time.time()
 
-        test_pred = self.predictor.query(xtest, test_info)
+        test_pred = []
+
+        for graph in xtest:
+            pred = self.predictor.query(graph, test_info)
+            test_pred.append(pred)
+        test_pred = np.array(test_pred)
+
         query_time_end = time.time()
 
         # If the predictor is an ensemble, take the mean
@@ -134,7 +147,7 @@ class PredictorEvaluator(object):
 
         logger.info("Compute evaluation metrics")
         results_dict = self.compare(ytest, test_pred)
-        results_dict["train_time"] = np.sum(train_times)
+        results_dict["train_time"] = -1 if train_times is None else np.sum(train_times)
         results_dict["fit_time"] = fit_time_end - fit_time_start
         results_dict["query_time"] = (query_time_end - fit_time_end) / len(xtest)
 
@@ -157,36 +170,34 @@ class PredictorEvaluator(object):
         self.results.append(results_dict)
 
 
-    def evaluate(self):
-        self.predictor.pre_process()
+    def load_train_test_data(self):
+        logger.info("Loading the test set")
 
-        logger.info("Load the test set")
-        test_data, arch_hash_map = self.load_dataset(
-            load_labeled=self.load_labeled, data_size=self.test_size
-        )
-
-        logger.info("Load the training set")
-        full_train_data, _ = self.load_dataset(
-            load_labeled=self.load_labeled,
-            data_size=self.train_size,
-            arch_hash_map=arch_hash_map,
-        )
-
-        # if the predictor requires unlabeled data (e.g. SemiNAS), generate it:
-        reqs = self.predictor.get_data_reqs()
-        unlabeled_data = None
-        if reqs["unlabeled"]:
-            logger.info("Load unlabeled data")
-            unlabeled_size = max_train_size * reqs["unlabeled_factor"]
-            [unlabeled_data, _, _, _], _ = self.load_dataset(
-                load_labeled=self.load_labeled,
-                data_size=unlabeled_size,
-                arch_hash_map=arch_hash_map,
+        if self.test_data_file is not None:
+            print('Loading from file')
+            test_data = self.load_dataset_from_file(self.test_data_file, self.test_size)
+        else:
+            test_data = self.load_dataset(
+                load_labeled=self.load_labeled, data_size=self.test_size
             )
 
-        # some of the predictors use a pre-computation step to save time in batch experiments:
-        self.predictor.pre_compute(full_train_data[0], test_data[0], unlabeled_data)
-        self.single_evaluate(full_train_data, test_data)
+        logger.info("Loading the training set")
+
+        if self.train_data_file is not None:
+            print('Loading from file')
+            train_data = self.load_dataset_from_file(self.train_data_file, self.train_size)
+        else:
+            train_data = self.load_dataset(
+                load_labeled=self.load_labeled,
+                data_size=self.train_size
+            )
+
+        return train_data, test_data
+
+    def evaluate(self):
+        self.predictor.pre_process()
+        train_data, test_data = self.load_train_test_data()
+        self.single_evaluate(train_data, test_data)
         self._log_to_json()
 
         return self.results
@@ -236,8 +247,8 @@ class PredictorEvaluator(object):
                 metrics_dict["precision_{}".format(k)] = (
                     sum(top_ytest & top_test_pred) / k
                 )
-            metrics_dict["full_ytest"] = list(ytest)
-            metrics_dict["full_testpred"] = list(test_pred)
+            metrics_dict["full_ytest"] = ytest.tolist()
+            metrics_dict["full_testpred"] = test_pred.tolist()
 
         except:
             for metric in METRICS:

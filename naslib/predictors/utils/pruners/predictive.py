@@ -19,6 +19,7 @@ import torch.nn.functional as F
 
 from .p_utils import *
 from . import measures
+from .measures.model_stats import get_model_stats
 
 import types
 import copy
@@ -119,7 +120,7 @@ def find_measures(
     loss_fn,  # loss function to use within the zero-cost metrics
     measure_names=None,  # an array of measure names to compute, if left blank, all measures are computed by default
     measures_arr=None,
-):  # [not used] if the measures are already computed but need to be summarized, pass them here
+):
 
     # Given a neural net
     # and some information about the input data (dataloader)
@@ -132,6 +133,24 @@ def find_measures(
             sum += torch.sum(arr[i])
         return sum.item()
 
+    if measure_names[0] in ['flops', 'params']:
+        data_iterator = iter(dataloader)
+        x, target = next(data_iterator)
+        x_shape = list(x.shape)
+        x_shape[0] = 1 # to prevent overflow
+
+        model_stats = get_model_stats(
+            net_orig,
+            input_tensor_shape=x_shape,
+            clone_model=True
+        )
+
+        if measure_names[0] == 'flops':
+            measure_score = float(model_stats.flops)/1e6 # megaflops
+        else:
+            measure_score = float(model_stats.parameters)/1e6 # megaparams
+        return measure_score
+
     if measures_arr is None:
         measures_arr = find_measures_arrays(
             net_orig,
@@ -142,12 +161,10 @@ def find_measures(
             measure_names=measure_names,
         )
 
-    # measure_score_list = {}
     for k, v in measures_arr.items():
         if k == "jacov":
             measure_score = v
         else:
             measure_score = sum_arr(v)
-        # measure_score_list[k] = measure_score
-    # return measure_score, measure_score_list
     return measure_score
+

@@ -65,13 +65,14 @@ def default_argument_parser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--config-file", default=None, metavar="FILE", help="path to config file")
+    parser.add_argument("--config-file", default=None, metavar="FILE", help="Path to config file")
     parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument("--datapath", default=None, metavar="FILE", help="Path to the folder with train/test data folders")
     return parser
 
 
@@ -144,6 +145,13 @@ def get_config_from_args(args=None):
     except AttributeError:
         for arg, value in pairwise(args):
             config[arg] = value
+
+    if args.datapath is not None:
+        config.train_data_file = os.path.join(args.datapath, 'train', 'data.json')
+        config.test_data_file = os.path.join(args.datapath, 'test', 'data.json')
+    else:
+        config.train_data_file = None
+        config.test_data_file = None
 
     # prepare the output directories
     config.save = "{}/{}/{}/{}/{}".format(
