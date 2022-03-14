@@ -273,6 +273,21 @@ class NasBench101SearchSpace(Graph):
                 'ops': ops
             }
 
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+        stacks_output_node = self.stacks + 2
+        in_feature_output = self.edges[stacks_output_node, stacks_output_node+1]['op'].op[-1].in_features
+
+        self.edges[stacks_output_node, stacks_output_node+1]['op'].op[-1] = nn.Linear(
+            in_feature_output, self.num_classes
+        )
+
     def query(
         self,
         metric=None,

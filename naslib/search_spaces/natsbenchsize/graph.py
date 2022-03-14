@@ -19,9 +19,18 @@ class NATSBenchSizeSearchSpace(Graph):
         super().__init__()
         self.channel_candidates = [8*i for i in range(1, 9)]
         self.channels = [8, 8, 8, 8, 8]
-
+        self.num_classes = self.NUM_CLASSES if hasattr(self, "NUM_CLASSES") else 10
         self.space_name = "natsbenchsizesearchspace"
         # Graph not implemented
+
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
 
     def query(
         self,

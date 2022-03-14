@@ -43,6 +43,16 @@ class NasBenchNLPSearchSpace(Graph):
         self.max_epoch = 50
         self.max_nodes = 12
         self.accs = None
+        self.num_classes = 0
+
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
 
     def load_labeled_architecture(self, dataset_api=None, max_nodes=12):
         """

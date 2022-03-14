@@ -366,6 +366,18 @@ class DartsSearchSpace(Graph):
                 else:
                     cell.input_node_idxs = [i - 2, i - 1]
 
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+        self.edges[23, 25]['op'].op[-1] = nn.Linear(
+            self.channels[-1] * self.num_in_edges, self.num_classes
+        )
+
     def auxilary_logits(self):
         return self.graph["out_from_24"]
 

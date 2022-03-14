@@ -134,6 +134,18 @@ class NasBench201SearchSpace(Graph):
                 private_edge_data=True,
             )
 
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+        self.edges[19, 20]['op'].op[-1] = nn.Linear(
+            self.channels[-1], self.num_classes
+        )
+
     def query(
         self,
         metric=None,

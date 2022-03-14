@@ -141,6 +141,18 @@ class NasBenchASRSearchSpace(Graph):
 
         return cell
 
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+        self.edges[self.n_blocks + 1, self.n_blocks + 2].op[-1] = Head(
+            self.dropout_rate, self.filters[-1], self.num_classes
+        )
+
     def query(self, metric=None, dataset=None, path=None, epoch=-1,
               full_lc=False, dataset_api=None):
         """

@@ -111,6 +111,20 @@ class TransBench101SearchSpaceMicro(Graph):
             self._get_decoder_for_task(self.dataset, n_channels=self._get_module_n_output_channels(module))
         )
 
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+        n_nodes = 1 + self.n_modules + 1
+        in_feature_output = self.edges[n_nodes-1, n_nodes]['op'].op[-1].in_features
+
+        self.edges[n_nodes-1, n_nodes]['op'].op[-1] = nn.Linear(
+            in_feature_output, self.num_classes
+        )
 
     def _get_stem_for_task(self, task):
         if task == "jigsaw":
@@ -186,6 +200,20 @@ class TransBench101SearchSpaceMicro(Graph):
         container.add_edge(1, 2)
         container.edges[1, 2].set('op', module)
         return container
+
+
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+        self.edges[19, 20]['op'].op[-1] = nn.Linear(
+            self.channels[-1], self.num_classes
+        )
+
 
     def query(self, metric=None, dataset=None, path=None, epoch=-1, full_lc=False, dataset_api=None):
         """
@@ -371,7 +399,18 @@ class TransBench101SearchSpaceMacro(Graph):
 
         self.max_epoch = 199
         self.space_name = 'transbench101'
-        
+
+
+    def change_n_classes(self, n):
+        """
+        Changes the channel size of the output layer
+
+        :param n: Number of output channels
+        :return: None
+        """
+        self.num_classes = n
+
+
     def query(self, metric=None, dataset=None, path=None, epoch=-1, full_lc=False, dataset_api=None):
         """
         Query results from transbench 101
