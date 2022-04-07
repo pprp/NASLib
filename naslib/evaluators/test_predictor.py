@@ -16,5 +16,6 @@ parser.add_argument('--cutout_prob', default=1.0, type=float, help='cutout')
 parser.add_argument('--train_portion', default=0.7, type=float, help='train_portion')
 config = parser.parse_args()
 config=CfgNode(vars(config))
+config.data = f'{utils.get_project_root()}/data'
 # Test predictor over all search spaces and datasets
 utils_predictor.evaluate_predictor_across_search_spaces(config)

@@ -20,7 +20,9 @@ dataset_api = get_dataset_api(config.search_space, config.dataset)
 
 # Initialize the search space and predictor
 # Method type can be "fisher", "grasp", "grad_norm", "jacov", "snip", "synflow", "flops" or "params"
-predictor = ZeroCost(config, batch_size=config.batch_size, method_type=config.predictor)
+print(config)
+dataloader, _, _, _, _ = utils.get_train_val_loaders(config, mode="train")
+predictor = ZeroCost(method_type=config.predictor, dataloader=dataloader)
 search_space = get_search_space(name=config.search_space, dataset=config.dataset)
 
 # Initialize the ZeroCostPredictorEvaluator class

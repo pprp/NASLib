@@ -20,7 +20,8 @@ def evaluate_predictor_across_search_spaces(config):
             config.train_data_file = None
             config.test_data_file = None
             config.save = "{}/{}/{}/{}/{}".format(config.out_dir,config.dataset,"predictors",config.predictor,config.seed,)
-            predictor = ZeroCost(config, batch_size=config.batch_size, method_type=config.predictor)
+            dataloader, _, _, _, _ = utils.get_train_val_loaders(config, mode="train")
+            predictor = ZeroCost(method_type=config.predictor, dataloader=dataloader)
             search_space = get_search_space(name=ss, dataset=ds)
             predictor_evaluator = ZeroCostPredictorEvaluator(predictor, config=config)
             predictor_evaluator.adapt_search_space(search_space, dataset_api=dataset_api)
