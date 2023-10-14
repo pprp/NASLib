@@ -295,7 +295,7 @@ class PredictorEvaluator(object):
         hyperparams = self.predictor.get_hyperparams()
 
         fit_time_end = time.time()
-        test_pred = self.predictor.query(xtest, test_info)
+        test_pred = self.predictor.query(xtest, info=test_info)
         query_time_end = time.time()
 
         # If the predictor is an ensemble, take the mean

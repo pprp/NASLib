@@ -22,6 +22,7 @@ from ..models import *
 
 
 def get_some_data(train_dataloader, num_batches, device):
+    # import pdb; pdb.set_trace()
     traindata = []
     dataloader_iter = iter(train_dataloader)
     for _ in range(num_batches):

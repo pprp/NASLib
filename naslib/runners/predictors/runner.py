@@ -56,8 +56,8 @@ supported_predictors = {
                            hparams_from_file=config.hparams_from_file),
     "bonas": BonasPredictor(encoding_type=EncodingType.BONAS, hpo_wrapper=True),
     "dngo": DNGOPredictor(encoding_type=EncodingType.ADJACENCY_ONE_HOT),
-    "fisher": ZeroCost(method_type="fisher"),
-    "flops": ZeroCost(method_type="flops"),
+    "fisher": ZeroCost(config=config, method_type="fisher"),
+    "flops": ZeroCost(config=config, method_type="flops"),
     "gcn": GCNPredictor(encoding_type=EncodingType.GCN, hpo_wrapper=True),
     "gp": GPPredictor(encoding_type=EncodingType.ADJACENCY_ONE_HOT,
                       hparams_from_file=config.hparams_from_file),
@@ -67,9 +67,9 @@ supported_predictors = {
         optimize_gp_hyper=True,
         h="auto",
     ),
-    "grad_norm": ZeroCost(method_type="grad_norm"),
-    "grasp": ZeroCost(method_type="grasp"),
-    "jacov": ZeroCost(method_type="jacov"),
+    "grad_norm": ZeroCost(config=config, method_type="grad_norm"),
+    "grasp": ZeroCost(config=config, method_type="grasp"),
+    "jacov": ZeroCost(config=config, method_type="jacov"),
     "lce": LCEPredictor(metric=Metric.VAL_ACCURACY),
     "lce_m": LCEMPredictor(metric=Metric.VAL_ACCURACY),
     "lcsvr": SVR_Estimator(
@@ -81,19 +81,19 @@ supported_predictors = {
     "nao": SemiNASPredictor(encoding_type=EncodingType.SEMINAS, semi=False, hpo_wrapper=False,
                             hparams_from_file=config.hparams_from_file),
     "ngb": NGBoost(encoding_type=EncodingType.ADJACENCY_ONE_HOT, hpo_wrapper=False),
-    "params": ZeroCost(method_type="params"),
+    "params": ZeroCost(config=config, method_type="params"),
     "rf": RandomForestPredictor(encoding_type=EncodingType.ADJACENCY_ONE_HOT, hpo_wrapper=False,
                                 hparams_from_file=config.hparams_from_file),
     "seminas": SemiNASPredictor(encoding_type="seminas", semi=True, hpo_wrapper=False, 
                                 hparams_from_file=config.hparams_from_file),
-    "snip": ZeroCost(method_type="snip"),
+    "snip": ZeroCost(config=config, method_type="snip"),
     "sotl": SoLosspredictor(metric=Metric.TRAIN_LOSS, sum_option="SoTL"),
     "sotle": SoLosspredictor(metric=Metric.TRAIN_LOSS, sum_option="SoTLE"),
     "sotlema": SoLosspredictor(metric=Metric.TRAIN_LOSS, sum_option="SoTLEMA"),
     "sparse_gp": SparseGPPredictor(
         encoding_type=EncodingType.ADJACENCY_ONE_HOT, optimize_gp_hyper=True,
     ),
-    "synflow": ZeroCost(method_type="synflow"),
+    "synflow": ZeroCost(config=config, method_type="synflow"),
     "valacc": EarlyStopping(metric=Metric.VAL_ACCURACY),
     "valloss": EarlyStopping(metric=Metric.VAL_LOSS),
     "var_sparse_gp": VarSparseGPPredictor(
@@ -143,9 +143,9 @@ supported_predictors = {
     "omni_ngb_no_encoding": OmniNGBPredictor(
         encoding_type=None, config=config, zero_cost=["jacov"], lce=["sotle"]
     ),
-    "nwot": ZeroCost(method_type="nwot"),
-    "epe_nas": ZeroCost(method_type="epe_nas"),
-    "zen": ZeroCost(method_type="zen")
+    "nwot": ZeroCost(config=config, method_type="nwot"),
+    "epe_nas": ZeroCost(config=config, method_type="epe_nas"),
+    "zen": ZeroCost(config=config, method_type="zen")
 }
 
 supported_search_spaces = {
