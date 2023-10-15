@@ -76,6 +76,10 @@ def find_measures_arrays(
     done, ds = False, 1
     measure_values = {}
 
+    # adapt to zero-cost measures
+    if hasattr(net_orig, "is_parsed") and net_orig.is_parsed is False:
+        net_orig.parse()
+
     while not done:
         try:
             for measure_name in measure_names:

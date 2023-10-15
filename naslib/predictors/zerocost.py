@@ -6,6 +6,7 @@ based on https://github.com/mohsaied/zero-cost-nas
 import torch
 import logging
 import math
+import numpy as np 
 
 from naslib.predictors.predictor import Predictor
 from naslib.predictors.utils.pruners import predictive
@@ -23,7 +24,7 @@ class ZeroCost(Predictor):
         self.method_type = method_type
         self.dataload = "random"
         self.num_imgs_or_batches = 1
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu") #("cuda:0" if torch.cuda.is_available() else "cpu")
         _, dataloader, _ = self.build_search_dataloaders(config)
         self.dataloader = dataloader 
     
@@ -43,9 +44,12 @@ class ZeroCost(Predictor):
         else: 
             loss_fn = graph.get_loss_fn() 
             n_classes = graph.num_classes
-        
+
         score_list = [] # store score for each graph
         for g in graph:
+            # if torch.cuda.is_available():
+            #     g = g.to(self.device) 
+            #     import pdb; pdb.set_trace()
             score = predictive.find_measures(
                     net_orig=g,
                     dataloader=dataloader,
@@ -66,4 +70,4 @@ class ZeroCost(Predictor):
 
             score_list.append(score)
 
-        return score_list 
+        return np.array(score_list)

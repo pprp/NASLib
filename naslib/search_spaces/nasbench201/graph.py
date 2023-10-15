@@ -319,7 +319,8 @@ class NasBench201SearchSpace(Graph):
 
         self.forward(x, None)
 
-        assert len(outputs) == 1
+        # import pdb; pdb.set_trace()
+        assert len(outputs) == 1, f'You should parse the graph first or there is something wrong with the graph.'
         return outputs[0]
 
     def encode(self, encoding_type=EncodingType.ADJACENCY_ONE_HOT):

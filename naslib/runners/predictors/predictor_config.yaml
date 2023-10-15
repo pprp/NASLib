@@ -14,7 +14,7 @@ search_space: nasbench201
 dataset: cifar10
 
 # one of the 31 predictors in benchmarks/predictors/runner.py
-predictor: zen
+predictor: gcn
 
 # 0: mutation-based, or 1: uniformly random, train/test sets
 uniform_random: 1

@@ -1,5 +1,5 @@
 seed: 0
-optimizer: bananas
+optimizer: npenas
 search_space: nasbench201
 dataset: cifar10
 out_dir: run
